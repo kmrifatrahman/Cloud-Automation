@@ -1,0 +1,312 @@
+trigger:
+- none
+
+pool: Nidwin10
+
+# resources:
+#   repositories:
+#   - repository: Monitoring_git
+
+#  # The name used to reference this repository in the checkout step i.e. the repository alias.
+#     type: git
+#     # The name of the repository in the format: <ProjectName>/<RepositoryName>
+#     name: Demo/Monitoring_git
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  weburl : 'http://10.0.0.4/TE_3E_3000'
+  aut : 'Kerberos'
+
+    
+# parameters:
+# - name: resourceGroupName
+#   displayName: '[REQUIRED] Resource group name for new VM'
+#   type: string
+#   default: PipelineRG
+
+
+# - name: location
+#   displayName: '[REQUIRED] Location where the resource group will be lunched'
+#   type: string
+#   default: centralus
+
+
+# - name: adminUsername
+#   displayName: '[REQUIRED] Provide admin user name'
+#   type: string
+#   default: DtAdmin
+
+
+# - name: adminPassword
+#   displayName: '[REQUIRED] Insert admin password'
+#   type: string
+#   default: D10105032enton
+
+
+
+# - name: vmName
+#   displayName: '[REQUIRED] Name of the VM'
+#   type: string
+#   default: DentonsVM
+
+
+# - name: dnsLabelPrefix
+#   displayName: '[REQUIRED] Insert DNS prefix'
+#   type: string
+#   default: dtdmsprevm
+
+
+# - name: virtualNetworkName
+#   displayName: '[REQUIRED] Insert v_net name'
+#   type: string
+#   default: DentonsvNet
+
+
+# - name: networkSecurityGroupName
+#   displayName: '[REQUIRED] Insert network security group name'
+#   type: string
+#   default: DentonsNSG
+
+
+# - name: subnetName
+#   displayName: '[REQUIRED] Insert subnet name'
+#   type: string
+#   default: DentonsSub
+
+# - name: willdscrun
+#   displayName: '[REQUIRED for DSC] Install WAPI?'
+#   type: string
+#   default: Yes
+#   values:
+#   - Yes
+#   - No
+
+# - name: NodeConfigurationNamevalue
+#   displayName: '[REQUIRED for DSC] Insert Node Configuration Name'
+#   type: string
+#   default: Node_Config_Name
+
+
+# - name: RegistrationUrlvalue
+#   displayName: '[REQUIRED for DSC] Insert Registration Url'
+#   type: string
+#   default: Registration_Url
+
+
+# - name: registrationKeyPrivatevalue
+#   displayName: '[REQUIRED for DSC] Insert Registration Key Private Value'
+#   type: string
+#   default: Registration_Key_Value
+
+
+
+
+
+# name: ${{ parameters.resourceGroupName }}-${{ parameters.location }}_$(Date:yyyyMMdd)$(Rev:.r)
+
+
+
+steps:
+# - task: AzurePowerShell@5
+#   displayName: 'Azure PowerShell script: FilePath'
+#   inputs:
+#     azureSubscription: 'rnd_connection'
+#     ScriptPath: '$(System.DefaultWorkingDirectory)/Powershell_script.ps1'
+#     ScriptArguments: '-resourceGroupName  ${{ parameters.resourceGroupName }} -location ${{ parameters.location }} -adminUsername ${{ parameters.adminUsername }} -adminPassword ${{ parameters.adminPassword }} -vmName ${{ parameters.vmName }} -dnsLabelPrefix ${{ parameters.dnsLabelPrefix }} -virtualNetworkName ${{ parameters.virtualNetworkName }} -networkSecurityGroupName ${{ parameters.networkSecurityGroupName }} -subnetName ${{ parameters.subnetName }} -NodeConfigurationNamevalue  ${{ parameters.NodeConfigurationNamevalue }} -RegistrationUrlvalue  ${{ parameters.RegistrationUrlvalue }} -registrationKeyPrivatevalue  ${{ parameters.registrationKeyPrivatevalue }} -willdscrun ${{ parameters.willdscrun }}'
+#     azurePowerShellVersion: LatestVersion
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: ExtractFiles@1
+  inputs:
+    archiveFilePatterns: '$(build.artifactStagingDirectory)/*.zip'
+    destinationFolder: '$(build.artifactStagingDirectory)\Monitor3EAPI'
+    cleanDestinationFolder: true
+    overwriteExistingFiles: true
+
+
+
+- task: replacetokens@5
+  inputs:
+    rootDirectory: '$(build.artifactStagingDirectory)\Monitor3EAPI\Content\C_C\agent\_work\1\s\Monitor3EAPI\Monitor3EAPI\obj\Release\Package\PackageTmp\'
+    targetFiles: 'web.config'
+    encoding: 'auto'
+    tokenPattern: 'default'
+    writeBOM: false
+    verbosity: 'detailed'
+    actionOnMissing: 'warn'
+    keepToken: true
+    actionOnNoFiles: 'warn'
+    enableTransforms: false
+    inlineVariables: 'weburl.aut'
+    enableRecursion: false
+    useLegacyPattern: false
+    useLegacyEmptyFeature: false
+    enableTelemetry: false
+
+
+- task: AzureFileCopy@5
+  inputs:
+    SourcePath: '$(build.artifactStagingDirectory)\Monitor3EAPI\Content\C_C\agent\_work\2\s\Monitor3EAPI\Monitor3EAPI\obj\Release\Package\PackageTmp'
+    azureSubscription: 'rnd_connection'
+    Destination: 'AzureVMs'
+    storage: 'bootdiagssna2lka3x2y6m'
+    resourceGroup: 'PipelineRG'
+    MachineNames: 'DentonsVM'
+    vmsAdminUserName: 'DtAdmin'
+    vmsAdminPassword: 'D10105032enton'
+    TargetPath: 'C:\inetpub\wwwroot'
+    enableCopyPrerequisites: true
+    CopyFilesInParallel: false
+    CleanTargetBeforeCopy: true
+
+
+# - task: AzurePowerShell@5
+#   inputs:
+#     azureSubscription: 'arm_new'
+#     ScriptType: 'InlineScript'
+#     Inline: |
+#       ################# Azure Blob Storage - PowerShell ####################  
+       
+#       ## Input Parameters  
+#       $resourceGroupName="PipelineRG"  
+#       $storageAccName="bootdiags67zuephtm5dmo"  
+#       $downloadPath=".\Download"  
+#       $downloadLocation="Download"  
+       
+#       ## Connect to Azure Account  
+#       #Connect-AzAccount   
+#       Connect-AzAccount -Identity -AccountId 'a15f1800-9542-4da5-9300-eefcc77009a2'
+#       #$ApplicationId = 'a15f1800-9542-4da5-9300-eefcc77009a2'
+#       #$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ApplicationId, $SecuredPassword
+#       Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential
+#       ## Function to dlownload all blob contents  
+#       Function DownloadBlobContents  
+#       {  
+#           Write-Host -ForegroundColor Green "Download blob contents from storage container.."    
+#           ## Get the storage account  
+#           $storageAcc=Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccName     
+#           ## Get the storage account context  
+#           $ctx=$storageAcc.Context  
+#           ## Get all the containers  
+#           $containers=Get-AzStorageContainer  -Context $ctx   
+#           ## Loop through the containers  
+#           foreach($container in $containers)  
+#           {          
+#               ## check if folder exists  
+#               $folderPath=$downloadPath+"\"+$container.Name  
+#               $destination=$downloadLocation+"\"+$container.Name  
+#               $folderExists=Test-Path -Path $folderPath  
+#               if($folderExists)  
+#               {  
+#                   Write-Host -ForegroundColor Magenta $container.Name "- folder exists"  
+#                   ## Get the blob contents from the container  
+#                   $blobContents=Get-AzStorageBlob -Container $container.Name  -Context $ctx  
+#                   foreach($blobContent in $blobContents)  
+#                   {  
+#                       ## Download the blob content  
+#                       Get-AzStorageBlobContent -Container $container.Name  -Context $ctx -Blob $blobContent.Name -Destination $destination -Force  
+#                   }  
+#               }  
+#               else  
+#               {        
+#                   Write-Host -ForegroundColor Magenta $container.Name "- folder does not exist"  
+#                   ## Create the new folder  
+#                   New-Item -ItemType Directory -Path $folderPath  
+#                   ## Get the blob contents from the container  
+#                   $blobContents=Get-AzStorageBlob -Container $container.Name  -Context $ctx  
+#                   foreach($blobContent in $blobContents)  
+#                   {  
+#                       ## Download the blob content  
+#                       Get-AzStorageBlobContent -Container $container.Name  -Context $ctx -Blob $blobContent.Name -Destination $destination -Force  
+#                   }  
+#               }  
+#           }     
+#       }   
+        
+#       DownloadBlobContents  
+#       Copy-Item -Path 'C:\Users\DtAdmin\Download\artifactpipeline\PackageTmp' -Destination 'C:\inetpub\wwwroot\Monitorin' -Recurse
+#       ## Disconnect from Azure Account  
+#       #Disconnect-AzAccount
+#     azurePowerShellVersion: 'LatestVersion'
+
+# - task: PowerShellOnTargetMachines@3
+#   inputs:
+#     Machines: '168.61.153.123'
+#     UserName: '${env:USERNAME}'
+#     UserPassword: '${env:PASSWORD}'
+#     InlineScript: |
+#       ################# Azure Blob Storage - PowerShell ####################  
+       
+#       ## Input Parameters  
+#       $resourceGroupName="PipelineRG"  
+#       $storageAccName="bootdiags67zuephtm5dmo"  
+#       $downloadPath=".\Download"  
+#       $downloadLocation="Download"  
+       
+#       ## Connect to Azure Account  
+#       #Connect-AzAccount   
+#       #Connect-AzAccount -Identity -AccountId 'a15f1800-9542-4da5-9300-eefcc77009a2'
+#       #$ApplicationId = 'a15f1800-9542-4da5-9300-eefcc77009a2'
+#       #$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ApplicationId, $SecuredPassword
+#       Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential
+#       ## Function to dlownload all blob contents  
+#       Function DownloadBlobContents  
+#       {  
+#           Write-Host -ForegroundColor Green "Download blob contents from storage container.."    
+#           ## Get the storage account  
+#           $storageAcc=Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccName     
+#           ## Get the storage account context  
+#           $ctx=$storageAcc.Context  
+#           ## Get all the containers  
+#           $containers=Get-AzStorageContainer  -Context $ctx   
+#           ## Loop through the containers  
+#           foreach($container in $containers)  
+#           {          
+#               ## check if folder exists  
+#               $folderPath=$downloadPath+"\"+$container.Name  
+#               $destination=$downloadLocation+"\"+$container.Name  
+#               $folderExists=Test-Path -Path $folderPath  
+#               if($folderExists)  
+#               {  
+#                   Write-Host -ForegroundColor Magenta $container.Name "- folder exists"  
+#                   ## Get the blob contents from the container  
+#                   $blobContents=Get-AzStorageBlob -Container $container.Name  -Context $ctx  
+#                   foreach($blobContent in $blobContents)  
+#                   {  
+#                       ## Download the blob content  
+#                       Get-AzStorageBlobContent -Container $container.Name  -Context $ctx -Blob $blobContent.Name -Destination $destination -Force  
+#                   }  
+#               }  
+#               else  
+#               {        
+#                   Write-Host -ForegroundColor Magenta $container.Name "- folder does not exist"  
+#                   ## Create the new folder  
+#                   New-Item -ItemType Directory -Path $folderPath  
+#                   ## Get the blob contents from the container  
+#                   $blobContents=Get-AzStorageBlob -Container $container.Name  -Context $ctx  
+#                   foreach($blobContent in $blobContents)  
+#                   {  
+#                       ## Download the blob content  
+#                       Get-AzStorageBlobContent -Container $container.Name  -Context $ctx -Blob $blobContent.Name -Destination $destination -Force  
+#                   }  
+#               }  
+#           }     
+#       }   
+        
+#       DownloadBlobContents  
+#       Copy-Item -Path 'C:\Users\DtAdmin\Download\artifactpipeline\PackageTmp' -Destination 'C:\inetpub\wwwroot\Monitorin' -Recurse
+#       ## Disconnect from Azure Account  
+#       Disconnect-AzAccount

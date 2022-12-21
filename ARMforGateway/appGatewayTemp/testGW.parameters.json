@@ -1,0 +1,112 @@
+// Not mandatory
+
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appgwName": {
+      "type": "String",
+      "metadata":{
+      "description": "AppGateway name"
+    }
+  },
+
+  "subcriptionID": {
+    "type": "string",
+    "defaultValue": "a77d2c8a-b7ca-4493-8046-38f707c7cd6f"
+  },
+
+  "resourceGroupName": {
+    "type": "string",
+    "metadata":{
+      "description": "input resourceGroupName"
+    }
+  },
+
+  "vnetName": {
+    "type": "string",
+    "metadata":{
+      "description": "Virtual Network Name"
+    }
+  },
+
+  "subIpname": {
+    "type": "string",
+    "metadata":{
+      "description": "name for fully dedicated subnet"
+    }
+  },
+  
+  "pubIPname": {
+    "type": "string",
+    "metadata":{
+      "description": "name of PublicIP"
+    }
+  },
+
+  "gatewayIPConfigurations": {
+    "type": "string",
+    "metadata":{
+      "description": "name value for gatewayIPConfigurations"
+    }
+  },
+
+  "backendAddressPools": {
+    "type": "string",
+    "metadata":{
+      "description": "name value for backendAddressPools"
+    }
+  },
+
+  "httpListeners": {
+    "type": "string",
+    "metadata":{
+      "description": "name value for HTTP Listener"
+    }
+  },
+
+  "frontendIPConfigurations": {
+    "type": "string",
+    "metadata":{
+      "description": "name value for frontendIPConfigurations"
+    }
+  },
+
+  "requestRoutingRules": {
+    "type": "string",
+    "metadata":{
+      "description": "name value for routing Rule"
+    }
+  },
+ 
+  "poolIP": {
+    "type": "String",
+    "defaultValue": "10.0.0.20,10.0.0.21",
+    "metadata":{
+      "description": "Ip's for backend pool address"
+    }
+  },
+
+
+  "backendHttpSettingsCollection": {
+    "type": "string",
+    "metadata":{
+      "description": "Backend setting Name"
+    }
+  },
+
+  "urlPathMap":{
+    "type": "string",
+    "metadata":{
+      "description": "name value for URL Path config"
+    }
+  },
+
+  "pathRuleName": {
+    "type": "string",
+    "metadata":{
+      "description": "name value for path rule"
+    }
+  }
+}

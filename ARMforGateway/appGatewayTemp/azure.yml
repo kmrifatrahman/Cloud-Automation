@@ -1,0 +1,91 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- none
+
+pool: myAgent
+
+
+
+parameters:
+
+- name: appgwName
+  displayName: '[REQUIRED] App Gateway name'
+  type: string
+  default: 'huluGW'
+
+- name: resourceGroupName
+  displayName: '[REQUIRED] resourceGroupName'
+  type: string
+  default: 'VMResources'
+
+- name: vnetName
+  displayName: '[REQUIRED] virtual network name'
+  type: string
+  default: 'vNet'
+
+- name: subIpname
+  displayName: '[REQUIRED] Dedicated Subnet Name'
+  type: string
+  default: 'appgwtest4'
+
+- name: pubIPname
+  displayName: '[REQUIRED] Dedicated Public IP Name'
+  type: string
+  default: 'appgwtest4Pub'
+
+
+- name: gatewayIPConfigurations
+  displayName: '[REQUIRED] Subnet for App Gateway name'
+  type: string
+  default: 'appGWconfig'
+
+- name: backendAddressPools
+  displayName: '[REQUIRED] backendAddressPools name'
+  type: string
+  default: 'vmPool'
+
+- name: httpListeners
+  displayName: '[REQUIRED] httpListeners name'
+  type: string
+  default: 'listTest1'
+
+- name: frontendIPConfigurations
+  displayName: '[REQUIRED] frontendIPConfigurations name'
+  type: string
+  default: 'frontEndIpConfig'
+
+- name: requestRoutingRules
+  displayName: '[REQUIRED] Routing Rule name'
+  type: string
+  default: 'Rule1'
+
+- name: backendHttpSettingsCollection
+  displayName: '[REQUIRED] backendHttpSetting name'
+  type: string
+  default: 'Set1'
+
+- name: urlPathMap
+  displayName: '[REQUIRED] backendHttpSetting name'
+  type: string
+  default: 'webPath'
+
+- name: pathRuleName
+  displayName: '[REQUIRED] backendHttpSetting name'
+  type: string
+  default: 'AboveWEB'
+
+
+
+
+steps:
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: 'ARM_AppGatway'
+    ScriptType: 'FilePath'
+    ScriptPath: 'gwDeploy.ps1'
+    ScriptArguments: '-appgwName ${{ parameters.appgwName }} -resourceGroupName ${{ parameters.resourceGroupName }} -vnetName ${{ parameters.vnetName }} -subIpname ${{ parameters.subIpname }} -pubIPname ${{ parameters.pubIPname }} -gatewayIPConfigurations ${{ parameters.gatewayIPConfigurations }} -backendAddressPools ${{ parameters.backendAddressPools }} -httpListeners ${{ parameters.httpListeners }} -frontendIPConfigurations ${{ parameters.frontendIPConfigurations }} -requestRoutingRules ${{ parameters.requestRoutingRules }} -backendHttpSettingsCollection ${{ parameters.backendHttpSettingsCollection }} -urlPathMap ${{ parameters.urlPathMap }} -pathRuleName ${{ parameters.pathRuleName }}'
+    azurePowerShellVersion: 'LatestVersion'

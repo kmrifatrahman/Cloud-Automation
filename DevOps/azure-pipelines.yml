@@ -1,0 +1,98 @@
+trigger:
+  - none
+  
+pool:
+        vmImage: 'windows-latest'
+  
+parameters:
+
+  - name: resourceGroupName
+    displayName: '[REQUIRED] Resource group name for new VM'
+    type: string
+    default: AutomationACC
+  
+  
+  - name: location
+    displayName: '[REQUIRED] Location where the resource group will be lunched'
+    type: string
+    default: eastus
+  
+  
+  - name: adminUsername
+    displayName: '[REQUIRED] Provide admin user name'
+    type: string
+    default: rft
+  
+  
+  - name: adminPassword
+    displayName: '[REQUIRED] Insert admin password'
+    type: string
+    default: hulu007k
+  
+  
+  - name: vmName
+    displayName: '[REQUIRED] Name of the VM'
+    type: string
+    default: solovm
+  
+  
+  - name: dnsLabelPrefix
+    displayName: '[REQUIRED] Insert DNS prefix'
+    type: string
+    default: dtdmsprevmhulu
+  
+  
+  - name: virtualNetworkName
+    displayName: '[REQUIRED] Insert v_net name'
+    type: string
+    default: DentonsvNet
+  
+  
+  - name: networkSecurityGroupName
+    displayName: '[REQUIRED] Insert network security group name'
+    type: string
+    default: DentonsNSG
+  
+  
+  - name: subnetName
+    displayName: '[REQUIRED] Insert subnet name'
+    type: string
+    default: DentonsSub
+  
+  - name: willdscrun
+    displayName: '[REQUIRED for DSC] Install WAPI?'
+    type: string
+    default: Yes
+    values:
+    - Yes
+    - No
+  
+  - name: NodeConfigurationNamevalue
+    displayName: '[REQUIRED for DSC] Insert Node Configuration Name'
+    type: string
+    default: VMConfiguration.wapi
+  
+  
+  - name: RegistrationUrlvalue
+    displayName: '[REQUIRED for DSC] Insert Registration Url'
+    type: string
+    default: https://c897d163-5533-4c39-a9b6-383cf8ee70c1.agentsvc.eus.azure-automation.net/accounts/c897d163-5533-4c39-a9b6-383cf8ee70c1
+  
+  
+  - name: registrationKeyPrivatevalue
+    displayName: '[REQUIRED for DSC] Insert Registration Key Private Value'
+    type: string
+    default: VUPnYYvtPetwACSx/qIcxzdFwiLLZ8nbeS9N1VOUxUN/LvRPgCnFdd9741TtesuNlbf7OO+kouSn9gdfZPD2cw==
+  
+  
+  
+name: ${{ parameters.resourceGroupName }}-${{ parameters.location }}_$(Date:yyyyMMdd)$(Rev:.r)
+  
+  
+  
+steps:
+
+- task: PowerShell@2
+  inputs:
+    filePath: '$(System.DefaultWorkingDirectory)/DevOps/autoArm.ps1'
+    arguments: '-resourceGroupName  ${{ parameters.resourceGroupName }} -location ${{ parameters.location }} -adminUsername ${{ parameters.adminUsername }} -adminPassword ${{ parameters.adminPassword }} -vmName ${{ parameters.vmName }} -dnsLabelPrefix ${{ parameters.dnsLabelPrefix }} -virtualNetworkName ${{ parameters.virtualNetworkName }} -networkSecurityGroupName ${{ parameters.networkSecurityGroupName }} -subnetName ${{ parameters.subnetName }} -NodeConfigurationNamevalue  ${{ parameters.NodeConfigurationNamevalue }} -RegistrationUrlvalue  ${{ parameters.RegistrationUrlvalue }} -registrationKeyPrivatevalue  ${{ parameters.registrationKeyPrivatevalue }} -willdscrun ${{ parameters.willdscrun }}'

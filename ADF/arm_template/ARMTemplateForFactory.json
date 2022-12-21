@@ -1,0 +1,648 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "testDataFactHulu"
+        },
+        "inputBlob_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'inputBlob'"
+        },
+        "SampleProOutput_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'SampleProOutput'"
+        },
+        "deathInput_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'deathInput'"
+        },
+        "deathTable_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'deathTable'"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/inputBlob')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('inputBlob_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/SampleProOutput')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "connectionString": "[parameters('SampleProOutput_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/deathInput')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('deathInput_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/deathTable')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "connectionString": "[parameters('deathTable_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/bloc to sql')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Data flow1",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "changesDeath Flow",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "InputSource": {},
+                                    "InsertIntoDB": {}
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {},
+                    "cancelAfter": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2022-10-27T10:22:52Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/dataflows/changesDeath Flow')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Death Table')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Death List Flow",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "changesDeath Flow",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "InputSource": {},
+                                    "InsertIntoDB": {}
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {},
+                    "cancelAfter": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2022-10-27T09:06:48Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/dataflows/changesDeath Flow')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Death Flow')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "inputDeathTable",
+                                "type": "DatasetReference"
+                            },
+                            "name": "source1"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "DeathTableOutput",
+                                "type": "DatasetReference"
+                            },
+                            "name": "sink1"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "derivedColumn1"
+                        }
+                    ],
+                    "scriptLines": [
+                        "source(output(",
+                        "          TIME as string,",
+                        "          GEO as string,",
+                        "          {UNITNo } as string,",
+                        "          SEX as string,",
+                        "          Age as string,",
+                        "          ICD10 as string,",
+                        "          Value as string,",
+                        "          FlagandFootnotes as string",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: false) ~> source1",
+                        "source1 derive(Value = multiply(toDouble(Value), 0.2),",
+                        "          Age = divide(toDouble(Age), 2)) ~> derivedColumn1",
+                        "derivedColumn1 sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     input(",
+                        "          TIME as string,",
+                        "          GEO as string,",
+                        "          UNITNo as decimal(38,0),",
+                        "          SEX as string,",
+                        "          Age as decimal(18,0),",
+                        "          ICD10 as string,",
+                        "          Value as decimal(18,0),",
+                        "          FlagandFootnotes as string",
+                        "     ),",
+                        "     deletable:false,",
+                        "     insertable:true,",
+                        "     updateable:false,",
+                        "     upsertable:false,",
+                        "     recreate:true,",
+                        "     format: 'table',",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true,",
+                        "     errorHandlingOption: 'stopOnFirstError',",
+                        "     mapColumn(",
+                        "          TIME,",
+                        "          GEO,",
+                        "          UNITNo = {UNITNo },",
+                        "          SEX,",
+                        "          Age,",
+                        "          ICD10,",
+                        "          Value,",
+                        "          FlagandFootnotes",
+                        "     )) ~> sink1"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/inputDeathTable')]",
+                "[concat(variables('factoryId'), '/datasets/DeathTableOutput')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/changesDeath Flow')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "inputDeathTable",
+                                "type": "DatasetReference"
+                            },
+                            "name": "InputSource"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "DeathTableOutput",
+                                "type": "DatasetReference"
+                            },
+                            "name": "InsertIntoDB"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "AlterRow1"
+                        },
+                        {
+                            "name": "derivedColumn1"
+                        }
+                    ],
+                    "scriptLines": [
+                        "source(output(",
+                        "          TIME as string,",
+                        "          GEO as string,",
+                        "          {UNITNo } as string,",
+                        "          SEX as string,",
+                        "          Age as string,",
+                        "          ICD10 as string,",
+                        "          Value as string,",
+                        "          FlagandFootnotes as string",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: false) ~> InputSource",
+                        "derivedColumn1 alterRow(upsertIf(toDouble(Value)>=10000),",
+                        "     updateIf(toDouble(Value)<=600),",
+                        "     updateIf(toDouble(Age)>=30)) ~> AlterRow1",
+                        "InputSource derive(Age = multiply(toDouble(Age), 0.5),",
+                        "          Value = divide(toDouble(Value), 5)) ~> derivedColumn1",
+                        "AlterRow1 sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     input(",
+                        "          TIME as string,",
+                        "          GEO as string,",
+                        "          UNITNo as decimal(38,0),",
+                        "          SEX as string,",
+                        "          Age as decimal(18,0),",
+                        "          ICD10 as string,",
+                        "          Value as decimal(18,0),",
+                        "          FlagandFootnotes as string",
+                        "     ),",
+                        "     deletable:false,",
+                        "     insertable:false,",
+                        "     updateable:true,",
+                        "     upsertable:true,",
+                        "     keys:['UNITNo'],",
+                        "     format: 'table',",
+                        "     batchSize: 1000,",
+                        "     errorHandlingOption: 'stopOnFirstError',",
+                        "     mapColumn(",
+                        "          TIME,",
+                        "          GEO,",
+                        "          UNITNo = {UNITNo },",
+                        "          SEX,",
+                        "          Age,",
+                        "          ICD10,",
+                        "          Value,",
+                        "          FlagandFootnotes",
+                        "     )) ~> InsertIntoDB"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/inputDeathTable')]",
+                "[concat(variables('factoryId'), '/datasets/DeathTableOutput')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DeathTable')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Trigger Adf hourly ",
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "Death Table",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Minute",
+                        "interval": 30,
+                        "startTime": "2022-10-27T00:17:15",
+                        "timeZone": "Bangladesh Standard Time"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/Death Table')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/newProductInput')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "inputBlob",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": "SamplePro.csv",
+                        "container": "input"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "Num",
+                        "type": "String"
+                    },
+                    {
+                        "name": "ProductName",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Origin ",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Price",
+                        "type": "String"
+                    },
+                    {
+                        "name": "SellP",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Adjustment",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Profit",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Brand",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Type",
+                        "type": "String"
+                    },
+                    {
+                        "name": "qty",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/inputBlob')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/newProducts')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "SampleProOutput",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "Num",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ProductName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Origin",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Price",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "SellP",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "Adjustment",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "Profit",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "Brand",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Type",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "QTY",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "PreProduct"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/SampleProOutput')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/inputDeathTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "deathInput",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": "SampleCause.csv",
+                        "container": "input"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "TIME",
+                        "type": "String"
+                    },
+                    {
+                        "name": "GEO",
+                        "type": "String"
+                    },
+                    {
+                        "name": "UNITNo ",
+                        "type": "String"
+                    },
+                    {
+                        "name": "SEX",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Age",
+                        "type": "String"
+                    },
+                    {
+                        "name": "ICD10",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Value",
+                        "type": "String"
+                    },
+                    {
+                        "name": "FlagandFootnotes",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/deathInput')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DeathTableOutput')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "deathTable",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "TIME",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "GEO",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "UNITNo",
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 0
+                    },
+                    {
+                        "name": "SEX",
+                        "type": "char"
+                    },
+                    {
+                        "name": "Age",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "ICD10",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Value",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "FlagandFootnotes",
+                        "type": "nvarchar"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "death"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/deathTable')]"
+            ]
+        }
+    ]
+}

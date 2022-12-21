@@ -1,0 +1,81 @@
+trigger:
+- none
+
+pool: Nidwin10
+
+
+
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  weburl : 'http://10.0.0.4/Monitor3EHulu'
+  aut : 'Kerberos'
+
+
+    
+
+steps:
+
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: ExtractFiles@1
+  inputs:
+    archiveFilePatterns: '$(build.artifactStagingDirectory)/*.zip'
+    destinationFolder: '$(build.artifactStagingDirectory)\Monitor3EAPI'
+    cleanDestinationFolder: true
+    overwriteExistingFiles: true
+
+# - task: CopyPublishBuildArtifacts@1
+#   inputs:
+#     CopyRoot: '$(Build.artifactStagingDirectory)\'
+#     Contents: '*'
+#     ArtifactName: 'test'
+#     ArtifactType: 'Container'
+
+
+
+- task: replacetokens@5
+  inputs:
+    rootDirectory: '$(build.artifactStagingDirectory)\Monitor3EAPI\Content\C_C\agent\_work\2\s\Monitor3EAPI\Monitor3EAPI\obj\Release\Package\PackageTmp\'
+    targetFiles: 'web.config'
+    encoding: 'auto'
+    tokenPattern: 'default'
+    writeBOM: false
+    verbosity: 'detailed'
+    actionOnMissing: 'warn'
+    keepToken: true
+    actionOnNoFiles: 'warn'
+    enableTransforms: false
+    inlineVariables: 'weburl.aut'
+    enableRecursion: false
+    useLegacyPattern: false
+    useLegacyEmptyFeature: false
+    enableTelemetry: false
+
+
+# - task: AzureFileCopy@5
+#   inputs:
+#     SourcePath: '$(Build.artifactStagingDirectory)\test\'
+#     azureSubscription: 'rnd_connection'
+#     Destination: 'AzureVMs'
+#     storage: 'bootdiagssna2lka3x2y6m'
+#     resourceGroup: 'Enamul_armdsc'
+#     MachineNames: 'DentonsVM'
+#     vmsAdminUserName: 'DtAdmin'
+#     vmsAdminPassword: 'D10105032enton'
+#     TargetPath: 'C:\inetpub\wwwroot'
+#     enableCopyPrerequisites: true
+#     CopyFilesInParallel: false

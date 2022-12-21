@@ -1,0 +1,47 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- none
+
+pool: hulu
+
+parameters:
+
+- name: ResourceGroupName
+  displayName: '[REQUIRED] Enter ResourceGroup Name'
+  type: string
+  default: 'DentonsRG'
+
+- name: poolIP
+  displayName: '[REQUIRED] Enter pool Ip with comma seperated form'
+  type: string
+  default: "'10.0.0.4,10.0.0.5'"
+
+- name: vnetName
+  displayName: '[REQUIRED] Enter vnet name'
+  type: string
+  default: 'vnetTest'
+
+- name: subIpname
+  displayName: '[REQUIRED] Enter fully dedicated subnetName under same vnet'
+  type: string
+  default: 'subIP'
+
+- name: pubIPname
+  displayName: '[REQUIRED] Enter dedicated public Ip with'
+  type: string
+  default: 'pubip'
+
+
+
+steps:
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: 'Rifat_Rahman(ad83caec-a004-4ed8-ad72-b62a38589324)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Build.SourcesDirectory)\bicepDeploy.ps1'
+    ScriptArguments: '-ResourceGroupName ${{parameters.ResourceGroupName}} -poolIP ${{ parameters.poolIP }} -subIpname ${{ parameters.subIpname }} -pubipName ${{ parameters.pubipName }} -vnetName ${{ parameters.vnetName }}'
+    azurePowerShellVersion: 'LatestVersion'

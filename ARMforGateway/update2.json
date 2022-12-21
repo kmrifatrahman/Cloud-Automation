@@ -1,0 +1,342 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appgwName": {
+            "defaultValue": "AppGw34",
+            "type": "String"
+        },
+
+        "subcriptionID": {
+          "type": "string",
+          "defaultValue": "a77d2c8a-b7ca-4493-8046-38f707c7cd6f"
+        },
+
+        "resourceGroupName": {
+          "type": "string",
+          "defaultValue": "VMResources"
+        },
+
+        "vnetName": {
+          "type": "string",
+          "defaultValue": "vNet"
+        },
+
+        "subIpname": {
+          "type": "string",
+          "defaultValue": "appgwtest4"
+        },
+        
+        "pubIPname": {
+          "type": "string",
+          "defaultValue": "appgwtest4Pub"
+        },
+
+        "gatewayIPConfigurations": {
+          "type": "string",
+          "defaultValue": "appGwIpConfig"
+        },
+
+        "backendAddressPools": {
+          "type": "string",
+          "defaultValue": "vmPool"
+        },
+
+        "httpListeners": {
+          "type": "string",
+          "defaultValue": "listener1"
+        },
+
+        "frontendIPConfigurations": {
+          "type": "string",
+          "defaultValue": "frontEndIpConfig"
+        },
+
+        "requestRoutingRules": {
+          "type": "string",
+          "defaultValue": "RoutingRule"
+        },
+       
+        "poolIP": {
+          "type": "string",
+          "defaultValue": "10.0.0.20"
+          // "metadata":{
+          //   "description": "input from ps1 Ip addresses"
+          // }
+        },
+      
+
+        "backendHttpSettingsCollection": {
+          "type": "string",
+          "defaultValue": "Setting1"
+        },
+
+        "urlPathMap":{
+          "type": "string",
+          "defaultValue": "path123"
+        },
+
+        "pathRuleName": {
+          "type": "string",
+          "defaultValue": "aboveTarget"
+        }       
+    },
+
+
+    "variables": {
+      "networkApiVersion": "2022-01-01",
+
+
+       "pubIPfront" : "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pubIPname'))]",
+       "vNet": "[concat(concat('/subscriptions/', parameters('subcriptionID'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Network/virtualNetworks/', parameters('vnetName')))]",
+       "subID" : "[concat(variables('vNet'),'/subnets/', parameters('subIpname'))]",
+       "appGwId": "[resourceId('Microsoft.Network/applicationGateways', parameters('appgwName'))]",
+       "urlPath": "[concat(variables('appGwId'),'/urlPathMaps/', parameters('urlPathMap'))]",
+       "pathRules": "[concat(variables('urlPath'), '/pathRules/', parameters('pathRuleName'))]",
+      //  "probeID": "[concat(variables('appGwId'),'/probes/',parameters('probesName1'))]",
+
+        "appGwSize": "Standard_v2",
+        "appGwTier": "Standard_v2",
+        // "appGwCapacity": 5,
+        "appGwFePort": 80,
+        "appGwFeProtocol": "Http",
+        "appGwBePort": 80,
+        "appGwBEProtocol": "Http"
+        },
+
+  "resources": [
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('networkApiVersion')]",
+      "name": "[parameters('appgwName')]",
+      "tags": {
+        "Group": "Monitoring"
+      },
+
+      // "identity": {
+      //   "type": "None",
+      //   "userAssignedIdentities": {
+
+      //   }
+      // },
+
+
+      "properties": {
+        "sku": {
+            "name": "[variables('appGwSize')]",
+            "tier": "[variables('appGwTier')]"
+            // "capacity": "[variables('appGwCapacity')]"
+          },
+
+        "autoscaleConfiguration": {
+          "maxCapacity": 10,
+          "minCapacity": 0
+        },
+
+
+
+        "gatewayIPConfigurations": [
+              {
+              "name": "[parameters('gatewayIPConfigurations')]",
+              "properties": {
+              "subnet": {
+                "id": "[concat(variables('subID'))]"
+              }
+            }
+        }
+        ],
+
+        
+        "backendAddressPools": [
+        {
+          "name": "[parameters('backendAddressPools')]",
+          "properties": {
+              "backendAddresses": [
+                 {
+                  "ipAddress": "[parameters('poolIP')]"
+                }
+               ]
+              }
+            }
+          ],
+
+        
+         "backendHttpSettingsCollection": [
+           {
+          "name": "[parameters('backendHttpSettingsCollection')]",
+          "properties": {
+               "port": "[variables('appGwBePort')]",
+               "protocol": "[variables('appGwBeProtocol')]",
+              "cookieBasedAffinity": "Disabled",
+               "pickHostNameFromBackendAddress": true,
+               "requestTimeout": 20
+              //  "probe":{
+              //   "id": "[variables('probeID')]"
+              //  },
+              //  "urlPathMaps":{
+              //   "id":"[variables('urlPath')]"
+              //  },
+              //  "pathRule":{
+              //   "id": "[variables('pathRules')]"
+              //  }
+             }
+             
+           }
+
+          //  {
+          // "name": "set2",
+          // "properties": {
+          //      "port": "[variables('appGwBePort')]",
+          //      "protocol": "[variables('appGwBeProtocol')]",
+          //     "cookieBasedAffinity": "Disabled",
+          //      "pickHostNameFromBackendAddress": true,
+          //      "requestTimeout": 20
+          //    }
+          //  }
+          ],
+        
+        
+        "frontendIPConfigurations": [
+          {
+           "name": "[parameters('frontendIPConfigurations')]",
+           "properties": {
+            "privateIPAllocationMethod": "Dynamic",
+            "publicIPAddress":{
+              "id": "[concat(variables('pubIPfront'))]"
+            }
+
+           }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "frontendPort",
+            "properties": {
+              "port": "[variables('appGwFePort')]"
+            }
+          }
+        ],
+
+
+        "httpListeners": [
+          {
+            "name": "[parameters('httpListeners')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(concat(variables('appGwId')), '/frontendIPConfigurations/', parameters('frontendIPConfigurations'))]"
+              },
+
+              "frontendPort": {
+                "id": "[concat(variables('appGwId'), '/frontendPorts/frontendPort')]"
+              },
+
+              "Protocol": "[variables('appGwFeProtocol')]"
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "prob1",
+            "properties": {
+                "protocol": "Http",
+                "host": "[parameters('poolIP')]",
+                "path": "/api",
+                "interval": 30,
+                "timeout": 30,
+                "unhealthyThreshold": 3,
+                "pickHostNameFromBackendHttpSettings": false,
+                "minServers": 0,
+                "match": {}
+            }
+          }
+
+
+          // {
+          //   "name": "prob2",
+          //   "properties": {
+          //       "protocol": "Http",
+          //       "host": "10.0.0.5",
+          //       "path": "/api",
+          //       "interval": 30,
+          //       "timeout": 30,
+          //       "unhealthyThreshold": 3,
+          //       "pickHostNameFromBackendHttpSettings": false,
+          //       "minServers": 0,
+          //       "match": {}
+          //   }
+          // }
+        ],
+        
+    
+        "requestRoutingRules": [
+            {
+             "Name": "[parameters('requestRoutingRules')]",
+             "id" : "[concat(variables('appGwId'), '/requestRoutingRules/', parameters('requestRoutingRules'))]",
+             "properties": {
+              "priority": 1,
+             "RuleType": "PathBasedRouting",
+            "httpListener": {
+                 "id": "[concat(variables('appGwId'), '/httpListeners/', parameters('httpListeners'))]"
+                 },
+
+
+            //  "backendAddressPool": {
+            //       "id": "[concat(variables('appGwId'), '/backendAddressPools/', parameters('backendAddressPools'))]"
+            //       }
+              // "backendHttpSettings": {
+              //    "id": "[concat(variables('appGwId'), '/backendHttpSettingsCollection/', parameters('backendHttpSettingsCollection'))]"
+              //    }
+
+
+
+            "urlPathMap": {
+            "id": "[concat(variables('urlPath'))]"
+             }
+            }
+          }
+        ],
+
+
+      "urlPathMaps": [
+          {
+            
+            "name": "[parameters('urlPathMap')]",
+            "id": "[concat(variables('urlPath'))]",
+
+            "properties": {
+              "defaultBackendAddressPool": {
+                "id": "[concat(variables('appGwId'), '/backendAddressPools/', parameters('backendAddressPools'))]"
+                },
+              "defaultBackendHttpSettings": {
+              "id": "[concat(variables('appGwId'), '/backendHttpSettingsCollection/', parameters('backendHttpSettingsCollection'))]"
+              },
+            "pathRules": [
+              {
+                "name": "[parameters('pathRuleName')]",
+                "id":"[variables('pathRules')]",
+                "properties": {
+                  "paths": [
+                    "/above"
+                    ],
+                    "backendAddressPool": {
+                      "id": "[concat(variables('appGwId'), '/backendAddressPools/', parameters('backendAddressPools'))]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[concat(variables('appGwId'), '/backendHttpSettingsCollection/', parameters('backendHttpSettingsCollection'))]"
+                        }
+                      }
+                    }
+                  ],
+              "requestRoutingRules": [
+                {
+                "id": "[concat(variables('appGwId'), '/requestRoutingRules/', parameters('requestRoutingRules'))]"
+                }]
+                }
+              }
+            ]
+      }
+    }
+  ]
+}
+  
