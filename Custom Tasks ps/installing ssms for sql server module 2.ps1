@@ -4,7 +4,7 @@
 
 
 
-#installing ssms
+#installing ssms#
 
 $InstallerSQL = $env:TEMP + “\SSMS-Setup-ENU.exe”; 
 Invoke-WebRequest “https://aka.ms/ssmsfullsetup" -OutFile $InstallerSQL; 
@@ -12,7 +12,7 @@ start $InstallerSQL /Quiet
 
 
 
-###Creating Database
+#Creating Database#
 
 $sql = "CREATE DATABASE [$NewDatabaseName] COLLATE SQL_Latin1_General_CP1_CI_AS;"
 $cmd = New-Object Data.SqlClient.SqlCommand $sql, $con;
