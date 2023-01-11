@@ -11,10 +11,5 @@ Param
 
  $UriPools = $UriOrganization + '/_apis/build/definitions/39?api-version=6.0'
  $PoolsResult = Invoke-RestMethod -Uri $UriPools -Method get -Headers $AzureDevOpsAuthenicationHeader 
-# Foreach ($pool in $PoolsResult.value)
-# {
-#     Write-Host $pool.name 
-# }
-$PoolsResult | ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
 
-#| ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
+$PoolsResult | ConvertTo-Csv | Out-File -FilePath "$home\desktop\yuiop.csv"
