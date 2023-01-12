@@ -9,18 +9,28 @@ $AzureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase
 $UriOrganization = "https://dev.azure.com/$($Organization)/"
 
 $UriPools = $UriOrganization + '/_apis/distributedtask/pools?api-version=6.0'
-$PoolsResult = Invoke-RestMethod -Uri $UriPools -Method get -Headers $AzureDevOpsAuthenicationHeader
+$PoolsResult = Invoke-RestMethod `
+                -Uri $UriPools `
+                -Method get `
+                -Headers $AzureDevOpsAuthenicationHeader
 
 Foreach ($pool in $PoolsResult.value)
 {
     if ($pool.agentCloudId -ne 1)
     {
         $uriAgents = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents?api-version=6.0"
-        $AgentsResults = Invoke-RestMethod -Uri $uriAgents -Method get -Headers $AzureDevOpsAuthenicationHeader
+        $AgentsResults = Invoke-RestMethod `
+                        -Uri $uriAgents `
+                        -Method get `
+                        -Headers $AzureDevOpsAuthenicationHeader
+
         Foreach ($agent in $AgentsResults.value)
         {
             $uriSelfHostedAgentCapabilities = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents/$($agent.Id)?includeCapabilities=true&api-version=6.0"
-            $SelfHostedAgentCapabilitiesResult = Invoke-RestMethod -Uri $uriSelfHostedAgentCapabilities -Method get -Headers $AzureDevOpsAuthenicationHeader
+            $SelfHostedAgentCapabilitiesResult = Invoke-RestMethod `
+                                                -Uri $uriSelfHostedAgentCapabilities `
+                                                -Method get `
+                                                -Headers $AzureDevOpsAuthenicationHeader
             Foreach ($shac in $SelfHostedAgentCapabilitiesResult)
             {
                 $Capabilities = $shac.systemCapabilities | Get-Member | where {$_.MemberType -eq 'NoteProperty'}
@@ -34,9 +44,10 @@ Foreach ($pool in $PoolsResult.value)
                     }
                 }
             }
+            Write-Host $uriSelfHostedAgentCapabilities
         }
     }
-    $SelfHostedAgentCapabilities | ConvertTo-Csv | Out-File -FilePath "$home\desktop\test2.csv"
+    # $SelfHostedAgentCapabilities.CapabilityValue
 }
 
 
