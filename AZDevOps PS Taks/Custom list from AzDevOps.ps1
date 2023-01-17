@@ -32,5 +32,6 @@ $PoolsResult = Invoke-RestMethod `
                 -Method get `
                 -Headers $headers 
 
-$PoolsResult.value | Sort-Object -Property autoProvision |Format-Table -Property name, createdOn, autoProvision, id, poolType, scope, owner
+$PoolsResult.value | Sort-Object -Property autoProvision |Format-Table -Property name, createdOn, autoProvision, id, isHosted, isLegacy
 # | Sort-Object -Property autoProvision |Format-Table -Property name, createdOn, autoProvision, id, poolType, scope
+# $PoolsResult.value

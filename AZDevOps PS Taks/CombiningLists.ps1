@@ -1,8 +1,9 @@
-﻿Param
-(
-    [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca',
-    [string]$Organization = 'hulu007k'
-)
+Param
+    (
+        [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca',
+        [string]$Organization = 'hulu007k',
+        [boolean]$export
+    )
 $SelfHostedAgentCapabilities = @()
 
 $AzureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($PAT)")) }
@@ -14,10 +15,13 @@ $PoolsResult = Invoke-RestMethod `
                 -Method get `
                 -Headers $AzureDevOpsAuthenicationHeader
 
+
+# $PoolsResult.value | Format-Table name, status
+
 Foreach ($pool in $PoolsResult.value)
 {
-    if ($pool.agentCloudId -ne 1)
-    {
+    #if ($pool.agentCloudId -ne 1)
+    
         $uriAgents = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents?api-version=6.0"
         $AgentsResults = Invoke-RestMethod `
                         -Uri $uriAgents `
@@ -33,23 +37,24 @@ Foreach ($pool in $PoolsResult.value)
                                                 -Headers $AzureDevOpsAuthenicationHeader
             Foreach ($shac in $SelfHostedAgentCapabilitiesResult)
             {
-                $Capabilities = $shac.systemCapabilities | Get-Member | where {$_.MemberType -eq 'NoteProperty'}
-                Foreach ($cap in $Capabilities)
-                {
-                    $SelfHostedAgentCapabilities += New-Object -TypeName PSObject -Property @{
-                        # CapabilityName=$cap.name
-                        # CapabilityValue=$($shac.systemCapabilities.$($cap.name))
-                        PoolName=$pool.name
-                        AgentName=$agent.name
-                        Status = $agent.status
-                    }
-                }
+                $Capabilities = $shac.systemCapabilities.'Agent.ComputerName' # | Get-Member | where {$_.MemberType -eq 'NoteProperty'}
+                        $SelfHostedAgentCapabilities += New-Object -TypeName PSObject -Property @{
+                            PoolName=$pool.name
+                            AgentName=$agent.name
+                            Status = $agent.status
+                            AgentVMname = $Capabilities
+                    
+                
             }
-            $SelfHostedAgentCapabilities | ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
+
+            #$SelfHostedAgentCapabilities
+            
         }
+
     }
-    # $SelfHostedAgentCapabilities.CapabilityValue
 }
 
+$SelfHostedAgentCapabilities
 
-#| ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
+
+# | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation
