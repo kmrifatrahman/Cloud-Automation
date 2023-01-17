@@ -1,12 +1,15 @@
-Param
-    (
-        [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca',
-        [string]$Organization = 'hulu007k'
-    )
-$SelfHostedAgentCapabilities = @()
+Param(
+    [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca', 
+    [string]$Organization = 'hulu007k',
+    [boolean]$export
+)
+
+$poolandAgent = @()
+
 
 $AzureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($PAT)")) }
 $UriOrganization = "https://dev.azure.com/$($Organization)/"
+
 
 $UriPools = $UriOrganization + '/_apis/distributedtask/pools?api-version=6.0'
 $PoolsResult = Invoke-RestMethod `
@@ -15,40 +18,44 @@ $PoolsResult = Invoke-RestMethod `
                 -Headers $AzureDevOpsAuthenicationHeader
 
 
-# $PoolsResult.value | Format-Table name, status
 
-Foreach ($pool in $PoolsResult.value)
-{
-    #if ($pool.agentCloudId -ne 1)
-    
+    Foreach ($pool in $PoolsResult.value)
+    {
+        #if ($pool.agentCloudId -ne 1)
+        
         $uriAgents = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents?api-version=6.0"
         $AgentsResults = Invoke-RestMethod `
-                        -Uri $uriAgents `
-                        -Method get `
-                        -Headers $AzureDevOpsAuthenicationHeader
+                            -Uri $uriAgents `
+                            -Method get `
+                            -Headers $AzureDevOpsAuthenicationHeader
 
-        Foreach ($agent in $AgentsResults.value)
-        {
-            $uriSelfHostedAgentCapabilities = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents/$($agent.Id)?includeCapabilities=true&api-version=6.0"
-            $SelfHostedAgentCapabilitiesResult = Invoke-RestMethod `
-                                                -Uri $uriSelfHostedAgentCapabilities `
-                                                -Method get `
-                                                -Headers $AzureDevOpsAuthenicationHeader
-            Foreach ($shac in $SelfHostedAgentCapabilitiesResult)
-            {
-                
-                    $SelfHostedAgentCapabilities += New-Object -TypeName PSObject -Property @{
-                        # CapabilityName=$cap.name
-                        # CapabilityValue=$($shac.systemCapabilities.$($cap.name))
-                        PoolName=$pool.name
-                        AgentName=$agent.name
-                        Status = $agent.status
-                    }
-                
-            }
-            $SelfHostedAgentCapabilities | ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
-        }
-#| ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
-}
+                Foreach ($agent in $AgentsResults.value)
+                {
+                    $uripoolandAgent = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents/$($agent.Id)?includeCapabilities=true&api-version=6.0"
+                    $poolandAgentsResult = Invoke-RestMethod `
+                                            -Uri $uripoolandAgent `
+                                            -Method get `
+                                            -Headers $AzureDevOpsAuthenicationHeader
 
+                                                
+                        Foreach ($shac in $poolandAgentsResult)
+                        {
+                            $Capabilities = $shac.systemCapabilities.'Agent.ComputerName'
 
+                            $poolandAgent += New-Object -TypeName PSObject -Property @{
+                                PoolName=$pool.name
+                                AgentName=$agent.name
+                                Status = $agent.status
+                                AgentVMname = $Capabilities    
+                            }
+
+                        
+                        
+                        }
+
+                }
+    }
+
+$poolandAgent
+
+# | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation

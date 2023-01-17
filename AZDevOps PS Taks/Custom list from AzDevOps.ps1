@@ -3,35 +3,49 @@ param (
     [string] $personalAccessToken = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca'
 )
 
+
+$result=@()
+
 $base64AuthInfo= [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(":$($personalAccessToken)"))
 $headers = @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 
-$result = Invoke-RestMethod `
+$project = Invoke-RestMethod `
             -Uri "https://dev.azure.com/$organisation/_apis/projects?api-version=6.0" `
             -Method Get `
             -Headers $headers
 
-$projectNames = $result.value.name
+$projectNames = $project.value.name
+
+
+
 
 Write-Host '################### all pipelines ######################'
 
 $projectNames | Foreach-Object {
-    $project = $_
+    $projectid = $_
 
-    $result = Invoke-RestMethod `
-                -Uri "https://dev.azure.com/$organisation/$project/_apis/pipelines?api-version=6.0-preview.1" `
+    $pipe = Invoke-RestMethod `
+                -Uri "https://dev.azure.com/$organisation/$projectid/_apis/pipelines?api-version=6.0-preview.1" `
                 -Method Get `
                 -Headers $headers 
 
-    $result.value |Format-Table -Property name, links, url, id, _links, folder
+$pipe.value |Format-Table -Property name, links, url, id, _links, folder
 } 
+
+
+
 Write-Host '############### all pools ##################'
 
-$PoolsResult = Invoke-RestMethod `
+$poolPipe = Invoke-RestMethod `
                 -Uri "https://dev.azure.com/$organisation/_apis/distributedtask/pools?api-version=6.0" `
                 -Method get `
                 -Headers $headers 
 
-$PoolsResult.value | Sort-Object -Property autoProvision |Format-Table -Property name, createdOn, autoProvision, id, isHosted, isLegacy
+$poolPipe.value.name | Sort-Object -Property autoProvision |Format-Table -Property name, createdOn, autoProvision, id, isHosted, isLegacy
 # | Sort-Object -Property autoProvision |Format-Table -Property name, createdOn, autoProvision, id, poolType, scope
-# $PoolsResult.value
+# $result += New-Object -TypeName PSObject -Property @{
+#     
+    
+#     }
+
+# $result

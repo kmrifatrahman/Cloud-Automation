@@ -37,19 +37,20 @@ Foreach ($pool in $PoolsResult.value)
                 Foreach ($cap in $Capabilities)
                 {
                     $SelfHostedAgentCapabilities += New-Object -TypeName PSObject -Property @{
-                        # CapabilityName=$cap.name
-                        # CapabilityValue=$($shac.systemCapabilities.$($cap.name))
+                        CapabilityName=$cap.name
+                        CapabilityValue=$($shac.systemCapabilities.$($cap.name))
                         PoolName=$pool.name
                         AgentName=$agent.name
                         Status = $agent.status
                     }
                 }
             }
-            $SelfHostedAgentCapabilities | ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
+            $SelfHostedAgentCapabilities
         }
     }
     # $SelfHostedAgentCapabilities.CapabilityValue
 }
 
 
-#| ConvertTo-Csv | Out-File -FilePath "$home\desktop\hulu2.csv"
+
+# | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation

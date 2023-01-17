@@ -1,8 +1,7 @@
 Param
     (
         [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca',
-        [string]$Organization = 'hulu007k',
-        [boolean]$export
+        [string]$Organization = 'hulu007k'
     )
 $SelfHostedAgentCapabilities = @()
 
@@ -37,23 +36,20 @@ Foreach ($pool in $PoolsResult.value)
                                                 -Headers $AzureDevOpsAuthenicationHeader
             Foreach ($shac in $SelfHostedAgentCapabilitiesResult)
             {
-                $Capabilities = $shac.systemCapabilities.'Agent.ComputerName' # | Get-Member | where {$_.MemberType -eq 'NoteProperty'}
-                        $SelfHostedAgentCapabilities += New-Object -TypeName PSObject -Property @{
-                            PoolName=$pool.name
-                            AgentName=$agent.name
-                            Status = $agent.status
-                            AgentVMname = $Capabilities
-                    
+                
+                    $SelfHostedAgentCapabilities += New-Object -TypeName PSObject -Property @{
+                        # CapabilityName=$cap.name
+                        # CapabilityValue=$($shac.systemCapabilities.$($cap.name))
+                        PoolName=$pool.name
+                        AgentName=$agent.name
+                        Status = $agent.status
+                    }
                 
             }
-
-            #$SelfHostedAgentCapabilities | Format-Table PoolName, AgentName, Status, Status | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath "$home\desktop\hulu2.csv"
-            
+            $SelfHostedAgentCapabilities 
         }
-#| Format-Table PoolName, AgentName, Status, Status | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath "$home\desktop\hulu2.csv"
-    }
-}
 
-$SelfHostedAgentCapabilities| Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation
+# | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation
+}
 
 
