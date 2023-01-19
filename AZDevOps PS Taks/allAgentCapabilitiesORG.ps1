@@ -45,12 +45,12 @@ Foreach ($pool in $PoolsResult.value)
                     }
                 }
             }
-            $SelfHostedAgentCapabilities
+            # $SelfHostedAgentCapabilities
         }
     }
-    # $SelfHostedAgentCapabilities.CapabilityValue
+    # $SelfHostedAgentCapabilities | Format-Table PoolName, AgentName, Status, AgentVMname
 }
 
-
+$SelfHostedAgentCapabilities | Format-Table PoolName, AgentName, Status
 
 # | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation

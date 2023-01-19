@@ -1,10 +1,11 @@
-Param(
-    [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca', 
-    [string]$Organization = 'hulu007k',
-    [boolean]$export
-)
+function PoolAgentStatus{
+# Param(
+#     [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca', 
+#     [string]$Organization = 'hulu007k',
+#     [boolean]$export
+# )
 
-$poolandAgent = @()
+$PoolAgentStatus = @()
 
 
 $AzureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($PAT)")) }
@@ -20,9 +21,7 @@ $PoolsResult = Invoke-RestMethod `
 
 
     Foreach ($pool in $PoolsResult.value)
-    {
-        #if ($pool.agentCloudId -ne 1)
-        
+    {        
         $uriAgents = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents?api-version=6.0"
         $AgentsResults = Invoke-RestMethod `
                             -Uri $uriAgents `
@@ -42,20 +41,20 @@ $PoolsResult = Invoke-RestMethod `
                         {
                             $Capabilities = $shac.systemCapabilities.'Agent.ComputerName'
 
-                            $poolandAgent += New-Object -TypeName PSObject -Property @{
+                            $PoolAgentStatus += New-Object -TypeName PSObject -Property @{
                                 PoolName=$pool.name
                                 AgentName=$agent.name
                                 Status = $agent.status
                                 AgentVMname = $Capabilities    
                             }
 
-                        
-                        
                         }
-
                 }
     }
+    $PoolAgentStatus
 
-$poolandAgent
-
+    Export-ModuleMember -Function PoolAgentStatus
 # | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation
+}
+
+# PoolAgentStatus

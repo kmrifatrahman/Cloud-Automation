@@ -1,4 +1,0 @@
-"ProjectName","Pipelines","ConnectedagentPool","PoolLink","AgentVM","Availablevm","vmHostedRegion","Availablepool"
-"appGateWayTest","ARM (11)","Azure Pipelines","https://dev.azure.com/hulu007k/_apis/build/Queues/9","dentonsPipeline","System.Object[]","System.Object[]","System.Object[]"
-"appGateWayTest","appGateWayTest-CI","hulu","https://dev.azure.com/hulu007k/_apis/build/Queues/40","dentonsPipeline","System.Object[]","System.Object[]","System.Object[]"
-"appGateWayTest","ARM","Azure Pipelines","https://dev.azure.com/hulu007k/_apis/build/Queues/9","dentonsPipeline","System.Object[]","System.Object[]","System.Object[]"
