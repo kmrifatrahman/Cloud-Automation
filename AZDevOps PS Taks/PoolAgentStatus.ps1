@@ -1,9 +1,9 @@
 function PoolAgentStatus{
-# Param(
-#     [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca', 
-#     [string]$Organization = 'hulu007k',
-#     [boolean]$export
-# )
+Param(
+    [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca', 
+    [string]$Organization = 'hulu007k',
+    [boolean]$export
+)
 
 $PoolAgentStatus = @()
 
@@ -36,6 +36,8 @@ $PoolsResult = Invoke-RestMethod `
                                             -Method get `
                                             -Headers $AzureDevOpsAuthenicationHeader
 
+                    $poolandAgentsResult
+
                                                 
                         Foreach ($shac in $poolandAgentsResult)
                         {
@@ -53,8 +55,8 @@ $PoolsResult = Invoke-RestMethod `
     }
     $PoolAgentStatus
 
-    Export-ModuleMember -Function PoolAgentStatus
+    # Export-ModuleMember -Function PoolAgentStatus
 # | Select-Object PoolName, AgentName, Status, AgentVMname | Export-Csv -path .\Agents.csv -NoTypeInformation
 }
 
-# PoolAgentStatus
+PoolAgentStatus

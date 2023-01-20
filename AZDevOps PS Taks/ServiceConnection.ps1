@@ -1,9 +1,9 @@
 function ServiceConnection{
-#     param (
-#     [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca',
-#     [string]$Organization = 'hulu007k',
-#     [string]$project = 'appGateWayTest'
-# )
+    param (
+    [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca',
+    [string]$Organization = 'hulu007k',
+    [string]$project = 'appGateWayTest'
+)
 
 $ServiceConnection = @()
 
@@ -19,6 +19,7 @@ $endpointsresult = Invoke-RestMethod `
             -Method GET `
             -Headers $AzureDevOpsAuthenicationHeader
 
+            $endpointsresult.value
 
 foreach($endpoints in $endpointsresult.value){
     $ServiceConnection += New-Object -TypeName PSObject -Property @{
@@ -29,9 +30,9 @@ foreach($endpoints in $endpointsresult.value){
         isReady = $endpoints.isReady
     }
 }
-$ServiceConnection.subscriptionId #| Format-Table subscriptionId
+$ServiceConnection #| Format-Table subscriptionId
 # $ServiceConnection #| Format-Table subscriptions, subscriptionId, ServiceConn, isShared, isReady       
-Export-ModuleMember -Function ServiceConnection
+# Export-ModuleMember -Function ServiceConnection
 }
 
-# ServiceConnection
+ServiceConnection
