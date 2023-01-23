@@ -6,14 +6,14 @@ Param
 
 )
 
-function PoolAgentStatus{
+function GetAgentsDetails {
     # Param(
     #     [string]$PAT = 'zlvptx5cfvn4ehwc7nyipmbrczmjy2cmboksowi723i5yrfun6ca', 
     #     [string]$Organization = 'hulu007k',
     #     [boolean]$export
     # )
     
-    $PoolAgentStatus = @()
+    $agentsDetails = @()
     
     
     $AzureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($PAT)")) }
@@ -22,56 +22,54 @@ function PoolAgentStatus{
     
     $UriPools = $UriOrganization + '/_apis/distributedtask/pools?api-version=6.0'
     $PoolsResult = Invoke-RestMethod `
-                    -Uri $UriPools `
-                    -Method get `
-                    -Headers $AzureDevOpsAuthenicationHeader
+        -Uri $UriPools `
+        -Method get `
+        -Headers $AzureDevOpsAuthenicationHeader
     
     
     
-        Foreach ($pool in $PoolsResult.value)
-        {        
-            $uriAgents = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents?api-version=6.0"
-            $AgentsResults = Invoke-RestMethod `
-                                -Uri $uriAgents `
-                                -Method get `
-                                -Headers $AzureDevOpsAuthenicationHeader
+    Foreach ($pool in $PoolsResult.value) {        
+        $uriAgents = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents?api-version=6.0"
+        $AgentsResults = Invoke-RestMethod `
+            -Uri $uriAgents `
+            -Method get `
+            -Headers $AzureDevOpsAuthenicationHeader
     
-                    Foreach ($agent in $AgentsResults.value)
-                    {
-                        $uripoolandAgent = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents/$($agent.Id)?includeCapabilities=true&api-version=6.0"
-                        $poolandAgentsResult = Invoke-RestMethod `
-                                                -Uri $uripoolandAgent `
-                                                -Method get `
-                                                -Headers $AzureDevOpsAuthenicationHeader
+        Foreach ($agent in $AgentsResults.value) {
+            $getAgentApiEndpoint = $UriOrganization + "_apis/distributedtask/pools/$($pool.Id)/agents/$($agent.Id)?includeCapabilities=true&api-version=6.0"
+            $agentDetails = Invoke-RestMethod `
+                -Uri $getAgentApiEndpoint `
+                -Method get `
+                -Headers $AzureDevOpsAuthenicationHeader
     
-                                                    
-                            Foreach ($shac in $poolandAgentsResult)
-                            {
-                                $Capabilities = $shac.systemCapabilities.'Agent.ComputerName'
+            $agentComputerName = $agentDetails.systemCapabilities.'Agent.ComputerName'                            
+            $agentsDetails += New-Object -TypeName PSObject -Property @{
+                PoolName    = $pool.name
+                AgentName   = $agent.name
+                Status      = $agent.status
+                AgentVMname = $agentComputerName    
     
-                                $PoolAgentStatus += New-Object -TypeName PSObject -Property @{
-                                    PoolName=$pool.name
-                                    AgentName=$agent.name
-                                    Status = $agent.status
-                                    AgentVMname = $Capabilities    
-                                }
-    
-                            }
-                    }
+            }
         }
-        $PoolAgentStatus
+    }
+    $agentsDetails
     
-    } #PoolAgentStatus
-    
-function BuildDefinition{
+} 
+
+# GetAgentsDetails
 
 
 
-$BuildDefinition =@()
 
-$PoolAgentStatus = PoolAgentStatus
-# $value
-# $value.PoolName
+function ListOfCollectedData{
+
+
+
+$ListOfCollectedData =@()
+
+$agetnsDetail = GetAgentsDetails
+# $agetnsDetail
+# $agetnsDetail.PoolName
 
  $AzureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($PAT)")) }
  $UriPro = "https://dev.azure.com/$($Organization)/$($project)"
@@ -79,14 +77,14 @@ $PoolAgentStatus = PoolAgentStatus
 
 
 
- $defUri = $UriPro + "/_apis/build/definitions?api-version=6.0"
- $defResult = Invoke-RestMethod `
-                -Uri $defUri `
+ $definitionsUri = $UriPro + "/_apis/build/definitions?api-version=6.0"
+ $getDefinitions = Invoke-RestMethod `
+                -Uri $definitionsUri `
                 -Method get `
                 -Headers $AzureDevOpsAuthenicationHeader 
                     
 
-        foreach($def in $defResult.value){
+        foreach($def in $getDefinitions.value){
 
         $PoolLink = $UriPro + "/_apis/build/definitions/$($def.Id)?api-version=6.0"
         $Poolsdef = Invoke-RestMethod `
@@ -94,45 +92,39 @@ $PoolAgentStatus = PoolAgentStatus
                         -Method get `
                         -Headers $AzureDevOpsAuthenicationHeader
                         
-            # $Poolsdef
-
 
         foreach($definition in $Poolsdef){
-            # $i = 0
-            $BuildDefinition += New-Object -TypeName PSObject -Property @{
+            $ListOfCollectedData += New-Object -TypeName PSObject -Property @{
                             ProjectName=$definition.project.name
                             Pipeline = $definition.name
-                            AgentPool = $definition.queue.name
-                            PoolLink = $definition.queue.url
-                            AgentList = $ag= foreach($pool in $PoolAgentStatus){
-                                                if ( $definition.queue.name -eq $pool.PoolName ) {
-                                                     $pool.AgentName
-                                                     }
-                                                }
-                        
-                            AgentStatus = foreach($agent in $PoolAgentStatus){
-                                                if ( $ag -eq $agent.AgentName ) {
-                                                    $agent.status
-                                                    }
-                                                }
-                            
-                        
-                            AgentVMName = foreach($agent in $PoolAgentStatus){
-                                            if ( $definition.queue.name -eq $agent.PoolName ) {
-                                                $agent.AgentVMName
-                                                } 
-                                            }
-                            #          
+                            AgentPools = $definition.queue.name
+                            AgentPoolsLink = $definition.queue.url
+                            AgentsList = $allAgent = foreach($agents in $agetnsDetail){
+                                if ( $definition.queue.name -eq $agents.PoolName ) {
+                                    $agents.AgentName
+                                }
+                            }
+                            AgentsStatus = foreach($agents in $agetnsDetail){
+                                if ( $allAgent -eq $agents.AgentName ) {
+                                    $agents.status
+                                }
+                            }
+                            AgentsVMName = foreach($agents in $agetnsDetail){
+                                if ( $allAgent -eq $agents.AgentName ) {
+                                    $agents.AgentVMName
+                                } 
+                            }
+                                     
                 }
-                # $i++ 
+    
             }
             
         }
-        $BuildDefinition | Format-Table ProjectName, Pipeline, AgentPool, PoolLink, AgentList, AgentStatus, AgentVMName
+        $ListOfCollectedData | Format-Table ProjectName, Pipeline, AgentPools, AgentPoolsLink, AgentsList, AgentsStatus, AgentsVMName
 
 
         # | Select-Object -Property ProjectName, Pipelines, ConnectedagentPool, PoolLink, AgentVM, Availablevm, vmHostedRegion, Availablepool | Export-csv .\tutu.csv -NoTypeInformation
 
         # | Format-Table -Property ProjectName, Pipelines, ConnectedagentPool, PoolLink, AgentVM, Availablevm, vmHostedRegion, Availablepool
 }
-BuildDefinition
+ListOfCollectedData
