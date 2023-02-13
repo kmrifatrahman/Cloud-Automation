@@ -9,7 +9,7 @@
   
           "subcriptionID": {
             "type": "string",
-            "defaultValue": "a77d2c8a-b7ca-4493-8046-38f707c7cd6f"
+            "defaultValue": "a77d2c8a-b7ca-8046-38f707c7cd6f"
           },
   
           "resourceGroupName": {
